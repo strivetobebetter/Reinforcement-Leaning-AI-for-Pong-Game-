@@ -1,6 +1,6 @@
 import pygame
+import pygame_gui
 import sys
-import tkinter as tk
 
 # Initialize Pygame
 pygame.init()
@@ -47,67 +47,105 @@ score2 = 0
 # Initialize game mode
 game_mode = None
 
-def start_single_player():
+# Set up Pygame GUI manager
+manager = pygame_gui.UIManager((screen_width, screen_height))
+
+# Create buttons for the main menu
+single_player_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((350, 250), (100, 50)),
+                                                     text='Single Player',
+                                                     manager=manager)
+two_player_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((350, 310), (100, 50)),
+                                                  text='Two Player',
+                                                  manager=manager)
+quit_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((350, 370), (100, 50)),
+                                           text='Quit',
+                                           manager=manager)
+
+# Create pause button
+pause_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((700, 10), (80, 50)),
+                                            text='Pause',
+                                            manager=manager)
+pause_button.hide()
+
+def start_game(mode):
     global game_mode
-    game_mode = '1'
-    root.destroy()
-    run_game()
+    game_mode = mode
+    manager.clear_and_reset()
+    pause_button.show()
 
-def start_two_player():
-    global game_mode
-    game_mode = '2'
-    root.destroy()
-    run_game()
+# Function to show the pause menu
+def show_pause_menu():
+    resume_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((350, 250), (100, 50)),
+                                                 text='Resume',
+                                                 manager=manager)
+    main_menu_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((350, 310), (100, 50)),
+                                                    text='Main Menu',
+                                                    manager=manager)
+    quit_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((350, 370), (100, 50)),
+                                               text='Quit',
+                                               manager=manager)
 
-def back_to_main_menu():
-    pygame.quit()
-    main_menu()
+# Main game loop
+running = True
+paused = False
+while running:
+    time_delta = pygame.time.Clock().tick(60) / 1000.0
 
-def quit_game():
-    pygame.quit()
-    sys.exit()
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+        if event.type == pygame.USEREVENT:
+            if event.user_type == pygame_gui.UI_BUTTON_PRESSED:
+                if event.ui_element == single_player_button:
+                    start_game('single')
+                elif event.ui_element == two_player_button:
+                    start_game('two')
+                elif event.ui_element == quit_button:
+                    running = False
+                elif event.ui_element == pause_button:
+                    paused = True
+                    show_pause_menu()
+                elif event.ui_element.text == 'Resume':
+                    paused = False
+                    manager.clear_and_reset()
+                    pause_button.show()
+                elif event.ui_element.text == 'Main Menu':
+                    paused = False
+                    game_mode = None
+                    manager.clear_and_reset()
+                    single_player_button.show()
+                    two_player_button.show()
+                    quit_button.show()
+                elif event.ui_element.text == 'Quit':
+                    running = False
 
-def run_game():
-    global player1_y, player2_y, ball_x, ball_y, ball_dx, ball_dy, score1, score2, player1_dy, player2_dy
-    player1_y = screen_height // 2 - paddle_height // 2
-    player2_y = screen_height // 2 - paddle_height // 2
-    ball_x = screen_width // 2 - ball_size // 2
-    ball_y = screen_height // 2 - ball_size // 2
-    ball_dx = 4
-    ball_dy = 4
-    score1 = 0
-    score2 = 0
-    player1_dy = 0
-    player2_dy = 0
+        manager.process_events(event)
 
-    # Main game loop
-    while True:
+    if game_mode and not paused:
+        # Game logic
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
+                running = False
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_w:
                     player1_dy = -paddle_speed
                 if event.key == pygame.K_s:
                     player1_dy = paddle_speed
-                if game_mode == '2':
+                if game_mode == 'two':
                     if event.key == pygame.K_UP:
                         player2_dy = -paddle_speed
                     if event.key == pygame.K_DOWN:
                         player2_dy = paddle_speed
-                if event.key == pygame.K_ESCAPE:
-                    show_pause_menu()
             if event.type == pygame.KEYUP:
                 if event.key == pygame.K_w or event.key == pygame.K_s:
                     player1_dy = 0
-                if game_mode == '2':
+                if game_mode == 'two':
                     if event.key == pygame.K_UP or event.key == pygame.K_DOWN:
                         player2_dy = 0
 
         # Move paddles
         player1_y += player1_dy
-        if game_mode == '2':
+        if game_mode == 'two':
             player2_y += player2_dy
         else:
             # Simple AI for single player mode
@@ -160,43 +198,9 @@ def run_game():
         score_text = font.render(str(score2), True, white)
         screen.blit(score_text, (screen_width * 3 // 4, 20))
 
-        # Update the display
-        pygame.display.flip()
+    # Update the display
+    manager.update(time_delta)
+    manager.draw_ui(screen)
+    pygame.display.flip()
 
-        # Cap the frame rate
-        pygame.time.Clock().tick(60)
-
-def show_pause_menu():
-    pause_menu = tk.Tk()
-    pause_menu.title("Pause Menu")
-    pause_frame = tk.Frame(pause_menu)
-    pause_frame.pack(pady=20)
-
-    resume_button = tk.Button(pause_frame, text="Resume", command=pause_menu.destroy)
-    resume_button.pack(side="left", padx=10)
-
-    main_menu_button = tk.Button(pause_frame, text="Main Menu", command=lambda: [pause_menu.destroy(), back_to_main_menu()])
-    main_menu_button.pack(side="left", padx=10)
-
-    quit_button = tk.Button(pause_frame, text="Quit", command=quit_game)
-    quit_button.pack(side="left", padx=10)
-
-    pause_menu.mainloop()
-
-def main_menu():
-    global root
-    root = tk.Tk()
-    root.title("Pong Game")
-    frame = tk.Frame(root)
-    frame.pack(pady=20)
-
-    single_player_button = tk.Button(frame, text="Single Player", command=start_single_player)
-    single_player_button.pack(side="left", padx=10)
-
-    two_player_button = tk.Button(frame, text="Two Player", command=start_two_player)
-    two_player_button.pack(side="right", padx=10)
-
-    root.mainloop()
-
-# Show the main menu
-main_menu()
+pygame.quit()
