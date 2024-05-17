@@ -1,2 +1,2 @@
-pygame_gui
+pygame_gui==v_069
 pygame
