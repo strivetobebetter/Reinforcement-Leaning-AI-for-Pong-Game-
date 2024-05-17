@@ -14,7 +14,7 @@ manager = pygame_gui.UIManager((WIDTH, HEIGHT))
 
 # Define the start menu
 start_menu_rect = pygame.Rect((WIDTH // 2 - 100, HEIGHT // 2 - 100), (200, 200))
-start_menu = pygame_gui.elements.UIPanel(relative_rect=start_menu_rect, manager=manager, starting_layer_height=1)
+start_menu = pygame_gui.elements.UIPanel(relative_rect=start_menu_rect, manager=manager)
 single_player_button_rect = pygame.Rect((0, 0), (180, 50))
 single_player_button = pygame_gui.elements.UIButton(relative_rect=single_player_button_rect, text='Single Player', manager=manager, container=start_menu)
 two_player_button_rect = pygame.Rect((0, 60), (180, 50))
@@ -22,8 +22,7 @@ two_player_button = pygame_gui.elements.UIButton(relative_rect=two_player_button
 
 # Define the pause menu
 pause_menu_rect = pygame.Rect((WIDTH // 2 - 100, HEIGHT // 2 - 100), (200, 200))
-pause_menu = pygame_gui.elements.UIPanel(relative_rect=pause_menu_rect, manager=manager, starting_layer_height=1)
-pause_menu.hide()
+pause_menu = pygame_gui.elements.UIPanel(relative_rect=pause_menu_rect, manager=manager, visible=0)
 resume_button_rect = pygame.Rect((0, 0), (180, 50))
 resume_button = pygame_gui.elements.UIButton(relative_rect=resume_button_rect, text='Resume', manager=manager, container=pause_menu)
 quit_button_rect = pygame.Rect((0, 60), (180, 50))
@@ -119,6 +118,10 @@ while running:
                 else:
                     pause_menu.hide()
 
+        manager.process_events(event)  # Update the GUI manager with the event
+
+    manager.update(time_delta)  # Update the GUI manager
+
     if game_started and not paused:
         screen.fill((0, 0, 0))
         update_paddles()
@@ -127,8 +130,7 @@ while running:
         draw_paddle(opponent_paddle_pos)
         draw_ball(ball_pos)
 
-    manager.update(time_delta)
-    manager.draw_ui(screen)
+    manager.draw_ui(screen)  # Draw the GUI elements
     pygame.display.flip()
 
 pygame.quit()
