@@ -12,6 +12,9 @@ screen = pygame.display.set_mode((WIDTH, HEIGHT))
 # Set up the GUI manager
 manager = pygame_gui.UIManager((WIDTH, HEIGHT))
 
+# Initialize the clock
+clock = pygame.time.Clock()
+
 # Define the start menu
 start_menu = pygame_gui.elements.UIPanel(relative_rect=pygame.Rect((350, 275), (100, 200)), manager=manager)
 single_player_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, 0), (100, 50)), text='Single Player', manager=manager, container=start_menu)
@@ -61,6 +64,7 @@ while running:
 
     # Draw everything
     screen.fill((0, 0, 0))
+    manager.update(time_delta)  # Update the GUI manager
     manager.draw_ui(screen)
     pygame.display.flip()
 
